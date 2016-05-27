@@ -18,37 +18,7 @@ function preload() {
 
 function create() {
 
-	initPlayer();
-	initPlayerControl();
 
-	initBulletPool();
-
-	initDummies();
-
-
-
-}
-
-function update() {
-	game.physics.arcade.collide(player, dummies);
-	game.physics.arcade.overlap(dummies, bulletPool,function(dummy,bullet){
-		if(!dummy.alive)
-			return;
-		dummy.stats.hp-=player.equipment.weapon.dmg;
-		bullet.kill();
-		console.log(dummy.stats.hp);
-		if(dummy.stats.hp<0)
-			dummy.kill();
-	});
-	playerMovement();
-
-}
-
-function render() {
-	
-}
-
-function initPlayer(){
 	player=game.add.sprite(game.world.centerX,game.world.centerY,"player");
 	player.anchor.setTo(0.25,0.7);
 	game.physics.arcade.enable(player);
@@ -59,30 +29,17 @@ function initPlayer(){
 
 	player.equipment={};
 	player.equipment.weapon=weapons.rifle;
-}
+	
 
+	NUMBER_OF_BULLETS=200;
 
-function initPlayerControl(){
 	upKey = game.input.keyboard.addKey(Phaser.Keyboard.W);
 	downKey = game.input.keyboard.addKey(Phaser.Keyboard.S);
 	leftKey = game.input.keyboard.addKey(Phaser.Keyboard.A);
 	rightKey = game.input.keyboard.addKey(Phaser.Keyboard.D);
-}
 
-function initBulletPool(){
-
-	NUMBER_OF_BULLETS=200;
 	bulletPool = this.game.add.group();
-	bulletPool.enableBody=true;
-	bulletPool.createMultiple(NUMBER_OF_BULLETS,'bullet');
-	bulletPool.setAll('anchor.x',0.5);
-	bulletPool.setAll('anchor.y',0.5);
-	bulletPool.setAll('checkWorldBounds',true);
-	bulletPool.setAll('outOfBoundsKill',true);
-	//bullet.checkWorldBounds = true;
-	//bullet.outOfBoundsKill = true;
-
-	/*for(var i = 0; i < NUMBER_OF_BULLETS; i++) {
+	for(var i = 0; i < NUMBER_OF_BULLETS; i++) {
 
 		var bullet = this.game.add.sprite(0, 0, 'bullet');
 		bulletPool.add(bullet);
@@ -91,11 +48,9 @@ function initBulletPool(){
 
 		game.physics.enable(bullet, Phaser.Physics.ARCADE);
 		bullet.kill();
-	}*/
-}
+	}
 
-function initDummies(){
-		dummies = this.game.add.group();
+	dummies = this.game.add.group();
 	for(var i = 0; i < 2; i++) {
 
 		var dummy = this.game.add.sprite(game.world.randomX, game.world.randomY, 'enemy');
@@ -114,7 +69,17 @@ function initDummies(){
 	}
 }
 
-function playerMovement(){
+function update() {
+	game.physics.arcade.collide(player, dummies);
+	game.physics.arcade.overlap(dummies, bulletPool,function(dummy,bullet){
+		if(!dummy.alive)
+			return;
+		dummy.stats.hp-=player.equipment.weapon.dmg;
+		bullet.kill();
+		console.log(dummy.stats.hp);
+		if(dummy.stats.hp<0)
+			dummy.kill();
+	});
 	player.body.velocity.x=0;
 	player.body.velocity.y=0;
 	if(upKey.isDown){
@@ -133,6 +98,10 @@ function playerMovement(){
 		fireBullet();
 	}
 	player.rotation = game.physics.arcade.angleToPointer(player);
+}
+
+function render() {
+	
 }
 
 function fireBullet(){
@@ -159,7 +128,8 @@ function fireBullet(){
 	// Phaser takes care of this for me by setting this flag
 	// but you can do it yourself by killing the bullet if
 	// its x,y coordinates are outside of the world.
-
+	bullet.checkWorldBounds = true;
+	bullet.outOfBoundsKill = true;
 
 	// Set the bullet position to the gun position.
 	//Math.ceil(-10+Math.random()*20)*Math.PI/180;
