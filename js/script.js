@@ -25,21 +25,14 @@ function create() {
 
 	initDummies();
 
-
+	game.time.events.loop(2000,addDummie,this);
 
 }
 
 function update() {
 	game.physics.arcade.collide(player, dummies);
-	game.physics.arcade.overlap(dummies, bulletPool,function(dummy,bullet){
-		if(!dummy.alive)
-			return;
-		dummy.stats.hp-=player.equipment.weapon.dmg;
-		bullet.kill();
-		console.log(dummy.stats.hp);
-		if(dummy.stats.hp<0)
-			dummy.kill();
-	});
+	//game.physics.arcade.overlap(dummies, bulletPool,hit(dummie,bullet));
+	//game.physics.arcade.overlap(dummies, player,killPlayer(dummie,player));
 	playerMovement();
 
 }
@@ -96,6 +89,12 @@ function initBulletPool(){
 
 function initDummies(){
 		dummies = this.game.add.group();
+		dummies.enableBody=true;
+		dummies.createMultiple(10,'enemy');
+		dummies.setAll('anchor.x',0.5);
+		dummies.setAll('anchor.y',0.5);
+		dummies.setAll('body.collideWorldBounds',true);
+/*
 	for(var i = 0; i < 2; i++) {
 
 		var dummy = this.game.add.sprite(game.world.randomX, game.world.randomY, 'enemy');
@@ -111,7 +110,22 @@ function initDummies(){
 
 		dummies.add(dummy);
 		
-	}
+	}*/
+}
+
+function addDummie(){
+	var dummie=dummies.getFirstDead();
+	if(!dummie||!player.alive)
+		return;
+	var coordinates=game.rnd.pick([{'x':50,'y':game.world.Y},{'x':game.world.width-50,'y':game.world.Y},{'x':game.world.randomX,'y':50},{'x':game.world.randomX,'y':game.world.height-50}]);
+	dummie.reset(coordinates.x,coordinates.y);
+	dummie.stats={};
+	dummie.stats.hp=5;
+	dummie.stats.speed=60;
+	dummie.alpha=0;
+	dummie.rotation=game.physics.arcade.moveToObject(dummie, player, 60);//game.physics.arcade.angleToXY(dummie,player.x,player.y);
+	
+	game.add.tween(dummie).to({'alpha':1},1000).start();
 }
 
 function playerMovement(){
@@ -135,8 +149,26 @@ function playerMovement(){
 	player.rotation = game.physics.arcade.angleToPointer(player);
 }
 
-function fireBullet(){
+function hit(object,bullet){
+	if(!object.alive)
+		return;
+	object.stats.hp-=player.equipment.weapon.dmg;
+	bullet.kill();
+	console.log(object.stats.hp);
+	if(object.stats.hp<=0)
+		object.kill();
+}
 
+function killPlayer(dummie,player){
+	if(player.alive)
+		player.kill();
+	if(dummie.alive)
+		dummie.kill();
+}
+
+function fireBullet(){
+	if(!player.alive)
+		return;
 	// Enforce a short delay between shots by recording
 	// the time that each bullet is shot and testing if
 	// the amount of time since the last shot is more than
@@ -170,6 +202,7 @@ function fireBullet(){
 	bullet.rotation=game.physics.arcade.angleToPointer(player)+90*Math.PI/180;
 	// Shoot it
 	rad=Math.sqrt(Math.pow(game.input.activePointer.x-player.x,2)+Math.pow(game.input.activePointer.y-player.y,2));
+	
 	//FOR CAMERA----------------------------------------------
 	_x=player.x+rad*(Math.cos(Math.acos((game.input.activePointer.x-player.x)/rad)+scatter(weapon.scatter)));
 	_y=player.y+rad*(Math.sin(Math.asin((game.input.activePointer.y-player.y)/rad)+scatter(weapon.scatter))); 
@@ -181,6 +214,7 @@ function fireBullet(){
 
 function distanceBetweenPoints(x1,y1,x2,y2){
 	//расстояние между 2 точками
+
 	return Math.sqrt(Math.pow(x1-x2)+Math.pow(y1-y2));
 }
 
