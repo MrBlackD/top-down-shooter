@@ -36,6 +36,7 @@ var playState={
 		game.physics.arcade.overlap(dummies, bulletPool,hit);
 		game.physics.arcade.overlap(dummies, player,killPlayer);
 		playerMovement();
+		dummies.forEachAlive(dummiesMovement,this);
 
 
 	},
@@ -80,19 +81,7 @@ var playState={
 		bulletPool.setAll('anchor.y',0.5);
 		bulletPool.setAll('checkWorldBounds',true);
 		bulletPool.setAll('outOfBoundsKill',true);
-		//bullet.checkWorldBounds = true;
-		//bullet.outOfBoundsKill = true;
 
-		/*for(var i = 0; i < NUMBER_OF_BULLETS; i++) {
-
-			var bullet = this.game.add.sprite(0, 0, 'bullet');
-			bulletPool.add(bullet);
-
-			bullet.anchor.setTo(0.5, 0.5);
-
-			game.physics.enable(bullet, Phaser.Physics.ARCADE);
-			bullet.kill();
-		}*/
 	}
 
 	function initDummies(){
@@ -103,23 +92,6 @@ var playState={
 			dummies.setAll('anchor.y',0.5);
 			dummies.setAll('body.collideWorldBounds',true);
 			dummies.setAll('body.bounce',1);
-	/*
-		for(var i = 0; i < 2; i++) {
-
-			var dummy = this.game.add.sprite(game.world.randomX, game.world.randomY, 'enemy');
-			dummy.rotation=Math.random()*360*Math.PI/180;
-			dummy.stats={};
-			dummy.stats.hp=100;
-
-			dummy.anchor.setTo(0.5, 0.5);
-
-			game.physics.enable(dummy, Phaser.Physics.ARCADE);
-			dummy.body.collideWorldBounds=true;
-			dummy.body.immovable=true;
-
-			dummies.add(dummy);
-			
-		}*/
 	}
 
 	function addDummie(){
@@ -175,6 +147,13 @@ var playState={
 			player.kill();
 		if(dummie.alive)
 			dummie.kill();
+	}
+
+	function dummiesMovement(dummie){
+		if(!player.alive) return;
+		dummie.rotation = game.math.angleBetween(dummie.x, dummie.y, player.x, player.y);
+		dummie.body.velocity.x = Math.cos(dummie.rotation) * dummie.stats.speed;
+        dummie.body.velocity.y = Math.sin(dummie.rotation) * dummie.stats.speed;
 	}
 
 	function fireBullet(){
