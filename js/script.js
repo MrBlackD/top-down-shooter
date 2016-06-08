@@ -1,8 +1,10 @@
 var weapons={};
-weapons['rifle']={
+weapons[0]={
+    id:0,
+    name:'rifle',
 	dmg:1,
 	lastShot:0,
-	shotDelay:400,
+	shotDelay:200,
 	bulletSpeed:2000,
 	scatter:5
 };
@@ -16,7 +18,7 @@ var playState={
 	create:function() {
 		// Create a label to display the FPS
 		game.fpsLabel = game.add.text(10, 10, '0',{fill:'#009900'});
-
+        game.stage.backgroundColor = "#ccc";
 		initPlayer();
 		initPlayerControl();
 
@@ -60,7 +62,7 @@ var playState={
 		player.stats.speed=200;
 
 		player.equipment={};
-		player.equipment.weapon=weapons.rifle;
+		player.equipment.weapon=weapons[0];
 	}
 
 
