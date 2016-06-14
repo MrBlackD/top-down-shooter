@@ -5,7 +5,7 @@ weapons[0]={
 	dmg:1,
 	lastShot:0,
 	shotDelay:200,
-	bulletSpeed:2000,
+	bulletSpeed:1000,
 	scatter:5
 };
 
@@ -16,53 +16,99 @@ var playState={
 	},
 
 	create:function() {
-		// Create a label to display the FPS
-		game.fpsLabel = game.add.text(10, 10, '0',{fill:'#009900'});
-        game.stage.backgroundColor = "#ccc";
+        game.renderer.renderSession.roundPixels=true;
+        initWorld();
+        
+        
+        
 		initPlayer();
 		initPlayerControl();
 
 		initBulletPool();
+        initEnemyGenerator();
 
 		initDummies();
-
-		game.time.events.loop(2000,addDummie,this);
+        initEnemyGenerator();
+        initUI();
+        /*addGenerator(16,16);
+        addGenerator(16,game.world.height-16);
+        addGenerator(game.world.width-16,16);
+        addGenerator(game.world.width-16,game.world.height-16);*/
+        
+        
+        
+        //addGenerator(16,16);
+        
+        addGenerator(game.world.centerX,16);
+        
+		game.time.events.loop(2000,function(){
+            generators.forEachAlive(function(generator){
+                   addDummie(generator.x,generator.y);
+            },this);
+        },this);
 
 	},
 
 	update:function() {
-		game.fpsLabel.text = game.time.fps;
+		
 
 		//game.debug.body(player);
+        fpsLabel.text = game.time.fps;
+        bytesCounter.text=player.stats.bytes + " bytes";
 
 		game.physics.arcade.overlap(dummies, bulletPool,hit);
+        game.physics.arcade.overlap(generators, bulletPool,hit);
 		game.physics.arcade.overlap(dummies, player,killPlayer);
 		playerMovement();
 		dummies.forEachAlive(dummiesMovement,this);
-
+        
 
 	},
 
 	render:function() {
-		
+
 	}
 };
 
+    function initWorld(){
+        game.stage.backgroundColor = "#000";
+        game.world.height=1000;
+        drawGrid();
+        
+    }
 
+    function initUI(){
+        // Create a label to display the FPS
+		fpsLabel = game.add.text(game.camera.x+game.camera.width-50,game.camera.y+ 10, '0',{fontSize:14,fill:'#999'});
+        fpsLabel.fixedToCamera=true;
+        //bytes counter
+        bytesCounter = game.add.text(game.camera.x,game.camera.y,' bytes',{fontSize:14,fill:'#33f'});
+        bytesCounter.fixedToCamera=true;
+    }
 
 	function initPlayer(){
-		player=game.add.sprite(game.world.centerX,game.world.centerY,"player");
+		player=game.add.sprite(game.world.centerX,game.world.height-50,"player");
 		player.anchor.setTo(0.3,0.5);
 		game.physics.arcade.enable(player);
 		player.body.allowRotation=true;
 		player.body.collideWorldBounds=true;
 		player.body.setSize(player.height,player.height);
 
-		player.stats={};
-		player.stats.speed=200;
+        player.stats={};
+        playerStats=JSON.parse(localStorage.getItem('playerStats'));
+        if(playerStats){
+            player.stats=playerStats;
+        }else{
+    		player.stats.speed=200;
+            player.stats.kills=0;
+            player.stats.bytes=0;
+        }
+        player.equipment={};
+        player.equipment.weapon=weapons[0];
+		
 
-		player.equipment={};
-		player.equipment.weapon=weapons[0];
+        game.camera.follow(player);
+        //game.camera.deadzone = new Phaser.Rectangle(game.camera.width/2-100, player.y-100,game.camera.width/2+100, game.camera.height/2+100);
 	}
 
 
@@ -96,15 +142,53 @@ var playState={
 			dummies.setAll('body.bounce',1);
 	}
 
-	function addDummie(){
+    function initEnemyGenerator(){
+        generators=this.game.add.group();
+        generators.enableBody=true;
+        generators.createMultiple(10,'tile');
+        generators.setAll('anchor.x',0.5);
+        generators.setAll('anchor.y',0.5);
+    }
+    
+
+
+    function drawGrid(){
+        var graphics = game.add.graphics(0,0);
+        graphics.lineStyle(1, 0x009900);
+        for(var i=0;i<game.world.height;i+=40){
+            //horizontal
+            graphics.moveTo(i,0);
+            graphics.lineTo(i,game.world.height);
+            //vertical
+            graphics.moveTo(0,i);
+            graphics.lineTo(game.world.width,i);
+            
+        }
+            
+    }
+
+
+    function addGenerator(x,y){
+        var generator=generators.getFirstDead();
+        generator.reset(x,y);
+        generator.stats={};
+        generator.stats.hp=20;
+        generator.alpha=0;
+        
+        game.add.tween(generator).to({'alpha':1},1000).start();
+    }
+
+	function addDummie(x,y){
 		var dummie=dummies.getFirstDead();
 		if(!dummie||!player.alive)
 			return;
-		var coordinates=game.rnd.pick([{'x':50,'y':game.world.Y},{'x':game.world.width-50,'y':game.world.Y},{'x':game.world.randomX,'y':50},{'x':game.world.randomX,'y':game.world.height-50}]);
-		dummie.reset(coordinates.x,coordinates.y);
+		dummie.reset(x,y);
+        
 		dummie.stats={};
 		dummie.stats.hp=5;
-		dummie.stats.speed=100;
+		dummie.stats.speed=50;
+        dummie.stats.bytes=1;
+        
 		dummie.alpha=0;
 		//game.debug.body(dummie);
 		dummie.rotation=game.physics.arcade.moveToObject(dummie, player, 60);//game.physics.arcade.angleToXY(dummie,player.x,player.y);
@@ -135,13 +219,17 @@ var playState={
 	}
 
 	function hit(object,bullet){
-		if(!object.alive)
+		if(!object.alive||object.alpha!=1)
 			return;
 		object.stats.hp-=player.equipment.weapon.dmg;
 		bullet.kill();
 		console.log(object.stats.hp);
-		if(object.stats.hp<=0)
-			object.kill();
+		if(object.stats.hp<=0){
+            object.kill();
+            player.stats.bytes+=object.stats.bytes;
+            player.stats.kills+=1;
+        }
+			
 	}
 
 	function killPlayer(dummie,player){
@@ -152,7 +240,11 @@ var playState={
 	}
 
 	function dummiesMovement(dummie){
-		if(!player.alive) return;
+		if(!player.alive){
+            dummie.body.velocity.x=0;
+            dummie.body.velocity.y=0;
+            return;
+        } 
 		dummie.rotation = game.math.angleBetween(dummie.x, dummie.y, player.x, player.y);
 		dummie.body.velocity.x = Math.cos(dummie.rotation) * dummie.stats.speed;
         dummie.body.velocity.y = Math.sin(dummie.rotation) * dummie.stats.speed;
@@ -201,7 +293,11 @@ var playState={
 		//game.physics.arcade.moveToXY(bullet,_x+game.camera.x, _y+game.camera.y, BULLET_SPEED);
 		//FOR CAMERA----------------------------------------------
 
-		game.physics.arcade.moveToXY(bullet,_x, _y, weapon.bulletSpeed);
+		//game.physics.arcade.moveToXY(bullet,_x+game.camera.x, _y+game.camera.y, weapon.bulletSpeed);
+        
+        bullet.rotation = game.math.angleBetween(bullet.x-game.camera.x, bullet.y-game.camera.y, game.input.activePointer.x, game.input.activePointer.y)+90*Math.PI/180;
+		bullet.body.velocity.x = Math.cos(bullet.rotation-90*Math.PI/180) * weapon.bulletSpeed;
+        bullet.body.velocity.y = Math.sin(bullet.rotation-90*Math.PI/180) * weapon.bulletSpeed;
 	}
 
 	function distanceBetweenPoints(x1,y1,x2,y2){
@@ -213,4 +309,11 @@ var playState={
 	function scatter(x){
 		//возвращает угол разброса в радианах
 		return Math.ceil(-x+Math.random()*x*2)*Math.PI/180;
+	}
+
+
+    function saveGameState(){
+
+		localStorage.setItem('playerStats',JSON.stringify(player.stats));
+
 	}

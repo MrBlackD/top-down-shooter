@@ -7,6 +7,7 @@ var loadState={
 		game.load.image("player","assets/player.png");
 		game.load.image("enemy","assets/enemy.png");
 		game.load.image("bullet","assets/bullet.png");
+        game.load.image("tile","assets/tile.png");
 
 	},
 	create:function(){
