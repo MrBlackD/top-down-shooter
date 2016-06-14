@@ -8,6 +8,15 @@ weapons[0]={
 	bulletSpeed:1000,
 	scatter:5
 };
+weapons[1]={
+    id:1,
+    name:'scope',
+	dmg:100,
+	lastShot:0,
+	shotDelay:1000,
+	bulletSpeed:3000,
+	scatter:2
+};
 
 
 var playState={
@@ -17,6 +26,9 @@ var playState={
 
 	create:function() {
         game.renderer.renderSession.roundPixels=true;
+        nextEnemy=0;
+        delay=2000;
+        
         initWorld();
         
         
@@ -27,8 +39,9 @@ var playState={
 		initBulletPool();
         initEnemyGenerator();
 
-		initDummies();
+
         initEnemyGenerator();
+        initEnemies();
         initUI();
         /*addGenerator(16,16);
         addGenerator(16,game.world.height-16);
@@ -39,13 +52,17 @@ var playState={
         
         //addGenerator(16,16);
         
-        addGenerator(game.world.centerX,16);
+        //addGenerator(game.world.centerX,16);
+        addEnemy(game.world.centerX,16);
         
-		game.time.events.loop(2000,function(){
+
+
+        
+/*		game.time.events.loop(2000,function(){
             generators.forEachAlive(function(generator){
                    addDummie(generator.x,generator.y);
             },this);
-        },this);
+        },this);*/
 
 	},
 
@@ -55,12 +72,22 @@ var playState={
 		//game.debug.body(player);
         fpsLabel.text = game.time.fps;
         bytesCounter.text=player.stats.bytes + " bytes";
+        
+        if(nextEnemy<game.time.now){
+            generators.forEachAlive(function(generator){
+                   addDummie(generator.x,generator.y);
+            },this);
+            
+            nextEnemy=game.time.now+delay;
+        }
 
-		game.physics.arcade.overlap(dummies, bulletPool,hit);
+		game.physics.arcade.overlap(enemies, bulletPool,hit);
         game.physics.arcade.overlap(generators, bulletPool,hit);
-		game.physics.arcade.overlap(dummies, player,killPlayer);
+		game.physics.arcade.overlap(enemies, player,killPlayer);
 		playerMovement();
-		dummies.forEachAlive(dummiesMovement,this);
+        
+        
+		enemies.forEachAlive(function(enemy){enemyMovement(enemy,'blinker')},this);
         
 
 	},
@@ -99,6 +126,7 @@ var playState={
         if(playerStats){
             player.stats=playerStats;
         }else{
+            player.stats.hp=10000;
     		player.stats.speed=200;
             player.stats.kills=0;
             player.stats.bytes=0;
@@ -132,14 +160,14 @@ var playState={
 
 	}
 
-	function initDummies(){
-			dummies = this.game.add.group();
-			dummies.enableBody=true;
-			dummies.createMultiple(10,'enemy');
-			dummies.setAll('anchor.x',0.5);
-			dummies.setAll('anchor.y',0.5);
-			dummies.setAll('body.collideWorldBounds',true);
-			dummies.setAll('body.bounce',1);
+	function initEnemies(){
+			enemies = this.game.add.group();
+			enemies.enableBody=true;
+			enemies.createMultiple(10,'enemy');
+			enemies.setAll('anchor.x',0.5);
+			enemies.setAll('anchor.y',0.5);
+			enemies.setAll('body.collideWorldBounds',true);
+			enemies.setAll('body.bounce',1);
 	}
 
     function initEnemyGenerator(){
@@ -178,22 +206,26 @@ var playState={
         game.add.tween(generator).to({'alpha':1},1000).start();
     }
 
-	function addDummie(x,y){
-		var dummie=dummies.getFirstDead();
-		if(!dummie||!player.alive)
+	function addEnemy(x,y){
+		var enemy=enemies.getFirstDead();
+		if(!enemy||!player.alive)
 			return;
-		dummie.reset(x,y);
+		enemy.reset(x,y);
         
-		dummie.stats={};
-		dummie.stats.hp=5;
-		dummie.stats.speed=50;
-        dummie.stats.bytes=1;
+		enemy.stats={};
+		enemy.stats.hp=5;
+		enemy.stats.speed=50;
+        enemy.stats.bytes=1;
         
-		dummie.alpha=0;
-		//game.debug.body(dummie);
-		dummie.rotation=game.physics.arcade.moveToObject(dummie, player, 60);//game.physics.arcade.angleToXY(dummie,player.x,player.y);
+        
+        enemy.equipment={};
+        enemy.equipment.weapon=weapons[1];
+        
+		enemy.alpha=0;
+		//game.debug.body(enemy);
+		enemy.rotation=game.physics.arcade.moveToObject(enemy, player, 60);//game.physics.arcade.angleToXY(enemy,player.x,player.y);
 		
-		game.add.tween(dummie).to({'alpha':1},1000).start();
+		game.add.tween(enemy).to({'alpha':1},1000).start();
 	}
 
 	function playerMovement(){
@@ -239,16 +271,65 @@ var playState={
 			dummie.kill();
 	}
 
-	function dummiesMovement(dummie){
+	function enemyMovement(enemy,behavior){
 		if(!player.alive){
-            dummie.body.velocity.x=0;
-            dummie.body.velocity.y=0;
+            enemy.body.velocity.x=0;
+            enemy.body.velocity.y=0;
             return;
-        } 
-		dummie.rotation = game.math.angleBetween(dummie.x, dummie.y, player.x, player.y);
-		dummie.body.velocity.x = Math.cos(dummie.rotation) * dummie.stats.speed;
-        dummie.body.velocity.y = Math.sin(dummie.rotation) * dummie.stats.speed;
+        }
+        switch(behavior){
+            case 'blinker':
+                enemy.rotation = game.math.angleBetween(enemy.x, enemy.y, player.x, player.y);
+                shoot(enemy);
+                blink(enemy);
+                break;
+            default:
+                enemy.rotation = game.math.angleBetween(enemy.x, enemy.y, player.x, player.y);
+                enemy.body.velocity.x = Math.cos(enemy.rotation) * enemy.stats.speed;
+                enemy.body.velocity.y = Math.sin(enemy.rotation) * enemy.stats.speed;
+                break;
+        }
+
 	}
+
+    //function for enemy random blinking
+
+    function blink(enemy){
+        if(!player.alive)
+			return;
+        if(!enemy.nextBlink)
+            enemy.nextBlink=0;
+        if(enemy.nextBlink<game.time.now){
+            do{
+                _x=game.rnd.integerInRange(game.camera.x,game.camera.x+game.camera.width);
+                _y=game.rnd.integerInRange(game.camera.y,game.camera.y+game.camera.height);
+            }while(game.physics.arcade.distanceBetween(player,{x:_x,y:_y})<100)
+                console.log(game.physics.arcade.distanceBetween(player,{x:_x,y:_y}));
+            enemy.x=_x;
+            enemy.y=_y;
+            enemy.nextBlink+=game.rnd.integerInRange(1000,2000);
+        }
+
+    }
+    //function for enemy shooting
+    function shoot(enemy){
+        if(!player.alive)
+			return;
+        var weapon=enemy.equipment.weapon;
+		if (game.time.now - weapon.lastShot < weapon.shotDelay) return;
+		weapon.lastShot = game.time.now;
+
+		var bullet = this.bulletPool.getFirstDead();
+
+		if (bullet === null || bullet === undefined) return;
+
+		bullet.revive();
+        bullet.reset(enemy.x,enemy.y);
+        bullet.rotation = game.math.angleBetween(bullet.x, bullet.y, player.x, player.y)+90*Math.PI/180;
+		bullet.body.velocity.x = Math.cos(bullet.rotation-90*Math.PI/180) * weapon.bulletSpeed;
+        bullet.body.velocity.y = Math.sin(bullet.rotation-90*Math.PI/180) * weapon.bulletSpeed;
+        
+    }
 
 	function fireBullet(){
 		if(!player.alive)
