@@ -25,10 +25,8 @@ var playState={
 	},
 
 	create:function() {
-        game.renderer.renderSession.roundPixels=true;
-        nextEnemy=0;
-        delay=2000;
-        
+
+        initOptions();
         initWorld();
         
         
@@ -43,12 +41,7 @@ var playState={
         initEnemyGenerator();
         initEnemies();
         initUI();
-        /*addGenerator(16,16);
-        addGenerator(16,game.world.height-16);
-        addGenerator(game.world.width-16,16);
-        addGenerator(game.world.width-16,game.world.height-16);*/
-        
-        
+
         
         //addGenerator(16,16);
         
@@ -73,6 +66,14 @@ var playState={
         fpsLabel.text = game.time.fps;
         bytesCounter.text=player.stats.bytes + " bytes";
         
+        if(targetedEnemy){
+            drawEnemyHpBar(targetedEnemy);
+            //enemyHpBar.text=targetedEnemy.stats.hp + " HP";
+            //drawEnemyHpBar(targetedEnemy);
+        }
+            
+        
+        
         if(nextEnemy<game.time.now){
             generators.forEachAlive(function(generator){
                    addDummie(generator.x,generator.y);
@@ -93,9 +94,17 @@ var playState={
 	},
 
 	render:function() {
-
+        
 	}
 };
+
+
+    function initOptions(){
+        game.renderer.renderSession.roundPixels=true;
+        nextEnemy=0;
+        delay=2000;
+        targetedEnemy=null;
+    }
 
     function initWorld(){
         game.stage.backgroundColor = "#000";
@@ -111,7 +120,37 @@ var playState={
         //bytes counter
         bytesCounter = game.add.text(game.camera.x,game.camera.y,' bytes',{fontSize:14,fill:'#33f'});
         bytesCounter.fixedToCamera=true;
+        
+        //enemy health  bar
+        enemyHpLabel=game.add.text(game.camera.x+game.camera.width/2,game.camera.y+ 10,'',{fontSize:14,fill:'#944'});
+        enemyHpLabel.anchor.setTo(0.5,0.5);
+        enemyHpLabel.fixedToCamera=true;
+        
+        enemyHpBarFrame = game.add.graphics(game.camera.width/2-102, game.camera.y+20);
+        enemyHpBarFrame.fixedToCamera=true;
+        enemyHpBarFrame.visible=false;
+        enemyHpBar = game.add.graphics(game.camera.width/2-100, game.camera.y+20);
+        enemyHpBar.fixedToCamera=true;
+        enemyHpBar.visible=false;
     }
+
+    function drawEnemyHpBar(enemy){
+        
+        enemyHpBarFrame.clear();
+        enemyHpBarFrame.lineStyle(24, 0xff9999);
+       
+        enemyHpBarFrame.moveTo(0, 0);  
+        enemyHpBarFrame.lineTo(204, 0);
+
+        enemyHpBar.clear();
+        enemyHpBar.lineStyle(20, 0xff3333);
+       
+        enemyHpBar.moveTo(0, 0);  
+        enemyHpBar.lineTo(200*enemy.stats.hp/enemy.stats.maxHp, 0);
+        
+
+    }
+
 
 	function initPlayer(){
 		player=game.add.sprite(game.world.centerX,game.world.height-50,"player");
@@ -126,7 +165,8 @@ var playState={
         if(playerStats){
             player.stats=playerStats;
         }else{
-            player.stats.hp=10000;
+            player.stats.hp=100;
+            player.stats.maxHp=100;
     		player.stats.speed=200;
             player.stats.kills=0;
             player.stats.bytes=0;
@@ -161,13 +201,13 @@ var playState={
 	}
 
 	function initEnemies(){
-			enemies = this.game.add.group();
-			enemies.enableBody=true;
-			enemies.createMultiple(10,'enemy');
-			enemies.setAll('anchor.x',0.5);
-			enemies.setAll('anchor.y',0.5);
-			enemies.setAll('body.collideWorldBounds',true);
-			enemies.setAll('body.bounce',1);
+        enemies = this.game.add.group();
+        enemies.enableBody=true;
+        enemies.createMultiple(10,'enemy');
+        enemies.setAll('anchor.x',0.5);
+        enemies.setAll('anchor.y',0.5);
+        enemies.setAll('body.collideWorldBounds',true);
+        enemies.setAll('body.bounce',1);
 	}
 
     function initEnemyGenerator(){
@@ -213,6 +253,7 @@ var playState={
 		enemy.reset(x,y);
         
 		enemy.stats={};
+        enemy.stats.maxHp=5;
 		enemy.stats.hp=5;
 		enemy.stats.speed=50;
         enemy.stats.bytes=1;
@@ -224,9 +265,14 @@ var playState={
 		enemy.alpha=0;
 		//game.debug.body(enemy);
 		enemy.rotation=game.physics.arcade.moveToObject(enemy, player, 60);//game.physics.arcade.angleToXY(enemy,player.x,player.y);
-		
+		enemy.inputEnabled=true;
+        enemy.events.onInputOver.add(mouseOverEnemy, this);
+        enemy.events.onInputOut.add(mouseOutEnemy, this);
+        
 		game.add.tween(enemy).to({'alpha':1},1000).start();
 	}
+
+
 
 	function playerMovement(){
 		player.body.velocity.x=0;
@@ -255,8 +301,10 @@ var playState={
 			return;
 		object.stats.hp-=player.equipment.weapon.dmg;
 		bullet.kill();
-		console.log(object.stats.hp);
+        targetedEnemy=object;
+        mouseOverEnemy(targetedEnemy);
 		if(object.stats.hp<=0){
+            mouseOutEnemy(targetedEnemy);
             object.kill();
             player.stats.bytes+=object.stats.bytes;
             player.stats.kills+=1;
@@ -303,8 +351,7 @@ var playState={
             do{
                 _x=game.rnd.integerInRange(game.camera.x,game.camera.x+game.camera.width);
                 _y=game.rnd.integerInRange(game.camera.y,game.camera.y+game.camera.height);
-            }while(game.physics.arcade.distanceBetween(player,{x:_x,y:_y})<100)
-                console.log(game.physics.arcade.distanceBetween(player,{x:_x,y:_y}));
+            }while(game.physics.arcade.distanceBetween(player,{x:_x,y:_y})<200)
             enemy.x=_x;
             enemy.y=_y;
             enemy.nextBlink+=game.rnd.integerInRange(1000,2000);
@@ -398,3 +445,17 @@ var playState={
 		localStorage.setItem('playerStats',JSON.stringify(player.stats));
 
 	}
+
+    function mouseOverEnemy(enemy){
+        enemyHpBar.visible=true;
+        enemyHpBarFrame.visible=true;
+        targetedEnemy=enemy;
+    }
+
+    function mouseOutEnemy(enemy){
+        game.time.events.add(Phaser.Timer.SECOND * 1, function(){
+            enemyHpBar.visible=false;
+            enemyHpBarFrame.visible=false;    
+        }, this);
+
+    }
