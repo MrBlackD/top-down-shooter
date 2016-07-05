@@ -224,12 +224,15 @@ var playState={
         var graphics = game.add.graphics(0,0);
         graphics.lineStyle(1, 0x009900);
         for(var i=0;i<game.world.height;i+=40){
-            //horizontal
-            graphics.moveTo(i,0);
-            graphics.lineTo(i,game.world.height);
-            //vertical
+                        //horizontal
             graphics.moveTo(0,i);
             graphics.lineTo(game.world.width,i);
+        }
+        for(var i=0;i<game.world.width;i+=40){
+            //vertical
+            graphics.moveTo(i,0);
+            graphics.lineTo(i,game.world.height);
+
             
         }
             
