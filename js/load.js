@@ -8,10 +8,14 @@ var loadState={
 		game.load.image("enemy","assets/enemy.png");
 		game.load.image("bullet","assets/bullet.png");
         game.load.image("tile","assets/tile.png");
+        
+        game.load.tilemap('trainingFloor', 'assets/trainingFloor.csv', null, Phaser.Tilemap.CSV);
+        game.load.image('trainingFloorTiles', 'assets/Tile.png');
+        
 
 	},
 	create:function(){
-		game.state.start('play');
+		game.state.start('training');
 	},
 	update:function(){
 

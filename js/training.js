@@ -1,18 +1,39 @@
-var playState={
+var map;
+var layer;
+var map2;
+var layer2;
+
+var trainingState={
 	preload:function() {
 
 	},
 
 	create:function() {
 
+            //  Because we're loading CSV map data we have to specify the tile size here or we can't render it
+
+
+        map = game.add.tilemap('trainingFloor', 16, 16);
+
+        //  Now add in the tileset
+        map.addTilesetImage('trainingFloorTiles');
+
+        //  Create our layer
+        layer = map.createLayer(0);
+
+        //  Resize the world
+        layer.resizeWorld();
+
+
         initOptions();
-        initWorld();
+        //initWorld();
         
         
         
 		initPlayer();
 		initPlayerControl();
 
+        
 		initBulletPool();
         initEnemyGenerator();
 
@@ -39,7 +60,7 @@ var playState={
 	},
 
 	update:function() {
-		
+		game.physics.arcade.collide(player, layer);
 
 		//game.debug.body(player);
         fpsLabel.text = game.time.fps;

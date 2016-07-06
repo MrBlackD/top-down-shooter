@@ -1,0 +1,107 @@
+{ "columns":0,
+ "margin":0,
+ "name":"walls",
+ "spacing":0,
+ "tilecount":24,
+ "tileheight":16,
+ "tiles":
+    {
+     "0":
+        {
+         "image":"not_used_yet\/D walls\/Walls0-0.png"
+        },
+     "1":
+        {
+         "image":"not_used_yet\/D walls\/Walls0-1.png"
+        },
+     "10":
+        {
+         "image":"not_used_yet\/D walls\/Walls2-2.png"
+        },
+     "11":
+        {
+         "image":"not_used_yet\/D walls\/Walls2-3.png"
+        },
+     "12":
+        {
+         "image":"not_used_yet\/D walls\/Walls3-0.png"
+        },
+     "13":
+        {
+         "image":"not_used_yet\/D walls\/Walls3-1.png"
+        },
+     "14":
+        {
+         "image":"not_used_yet\/D walls\/Walls3-2.png"
+        },
+     "15":
+        {
+         "image":"not_used_yet\/D walls\/Walls3-3.png"
+        },
+     "16":
+        {
+         "image":"not_used_yet\/D walls\/Walls4-0.png"
+        },
+     "17":
+        {
+         "image":"not_used_yet\/D walls\/Walls4-1.png"
+        },
+     "18":
+        {
+         "image":"not_used_yet\/D walls\/Walls4-2.png"
+        },
+     "19":
+        {
+         "image":"not_used_yet\/D walls\/Walls4-3.png"
+        },
+     "2":
+        {
+         "image":"not_used_yet\/D walls\/Walls0-2.png"
+        },
+     "20":
+        {
+         "image":"not_used_yet\/D walls\/Walls5-0.png"
+        },
+     "21":
+        {
+         "image":"not_used_yet\/D walls\/Walls5-1.png"
+        },
+     "22":
+        {
+         "image":"not_used_yet\/D walls\/Walls5-2.png"
+        },
+     "23":
+        {
+         "image":"not_used_yet\/D walls\/Walls5-3.png"
+        },
+     "3":
+        {
+         "image":"not_used_yet\/D walls\/Walls0-3.png"
+        },
+     "4":
+        {
+         "image":"not_used_yet\/D walls\/Walls1-0.png"
+        },
+     "5":
+        {
+         "image":"not_used_yet\/D walls\/Walls1-1.png"
+        },
+     "6":
+        {
+         "image":"not_used_yet\/D walls\/Walls1-2.png"
+        },
+     "7":
+        {
+         "image":"not_used_yet\/D walls\/Walls1-3.png"
+        },
+     "8":
+        {
+         "image":"not_used_yet\/D walls\/Walls2-0.png"
+        },
+     "9":
+        {
+         "image":"not_used_yet\/D walls\/Walls2-1.png"
+        }
+    },
+ "tilewidth":16
+}
